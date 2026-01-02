@@ -1,0 +1,48 @@
+import numpy as np
+from scipy import stats
+
+def confidence_interval(data: list[float], confidence_level: float = 0.95) -> dict:
+    """
+    Calculate confidence interval for population mean using t-distribution.
+    
+    Args:
+        data: Sample data
+        confidence_level: Confidence level (default 0.95)
+    
+    Returns:
+        Dictionary containing:
+        - mean: Sample mean
+        - standard_error: Standard error of the mean
+        - margin_of_error: Margin of error
+        - lower_bound: Lower bound of CI
+        - upper_bound: Upper bound of CI
+        - confidence_level: Confidence level used
+    """
+    data = np.array(data, dtype=float)
+    n = len(data)
+
+    if n < 2:
+        raise ValueError("Data must contain at least two observations")
+
+    mean = np.mean(data)
+    sample_std = np.std(data, ddof=1)   
+    standard_error = sample_std / np.sqrt(n)
+
+    df = n - 1
+
+    alpha = 1 - confidence_level
+    t_critical = stats.t.ppf(1 - alpha / 2, df)
+
+    margin_of_error = t_critical * standard_error
+
+    lower_bound = mean - margin_of_error
+    upper_bound = mean + margin_of_error
+
+    return {
+        "mean": round(mean, 4),
+        "standard_error": round(standard_error, 4),
+        "margin_of_error": round(margin_of_error, 4),
+        "lower_bound": round(lower_bound, 4),
+        "upper_bound": round(upper_bound, 4),
+        "confidence_level": confidence_level
+    }
