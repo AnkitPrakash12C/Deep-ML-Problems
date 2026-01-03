@@ -1,0 +1,24 @@
+import numpy as np
+
+def prune_attention_heads(
+    attention_weights: np.ndarray,
+    head_importance_scores: np.ndarray,
+    pruning_ratio: float
+) -> tuple[np.ndarray, list[int]]:
+    num_heads = attention_weights.shape[0]
+
+    keep_heads = int(round(num_heads * (1 - pruning_ratio)))
+    keep_heads = max(0, min(keep_heads, num_heads))
+
+    if keep_heads == 0:
+        return np.empty((0,) + attention_weights.shape[1:]), []
+
+    ranked_heads = np.argsort(head_importance_scores)[::-1]
+
+    kept_head_indices = ranked_heads[:keep_heads]
+
+    kept_head_indices = np.sort(kept_head_indices)
+
+    pruned_attention_weights = attention_weights[kept_head_indices]
+
+    return pruned_attention_weights, kept_head_indices.tolist()
