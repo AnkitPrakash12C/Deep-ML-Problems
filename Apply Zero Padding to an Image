@@ -1,0 +1,39 @@
+def zero_pad_image(img, pad_width):
+    """
+    Add zero padding around a grayscale image.
+    
+    Args:
+        img: 2D list or numpy array of pixel values
+        pad_width: integer number of pixels to pad on each side
+    
+    Returns:
+        Padded image as 2D list with integer values,
+        or -1 if input is invalid
+    """    
+    if not isinstance(pad_width, int) or pad_width < 0:
+        return -1
+
+    if img is None or not isinstance(img, (list, tuple)) or len(img) == 0:
+        return -1
+
+    if hasattr(img, "tolist"):
+        img = img.tolist()
+
+    if not all(isinstance(row, list) and len(row) > 0 for row in img):
+        return -1
+
+    cols = len(img[0])
+    if any(len(row) != cols for row in img):
+        return -1
+    
+    rows = len(img)
+    new_rows = rows + 2 * pad_width
+    new_cols = cols + 2 * pad_width
+
+    padded_img = [[0] * new_cols for _ in range(new_rows)]
+
+    for i in range(rows):
+        for j in range(cols):
+            padded_img[i + pad_width][j + pad_width] = int(img[i][j])
+
+    return padded_img
