@@ -1,0 +1,43 @@
+import numpy as np
+from typing import Tuple
+
+def find_best_split(X: np.ndarray, y: np.ndarray) -> Tuple[int, float]:
+    """
+    Return the (feature_index, threshold) that minimises weighted Gini impurity.
+    Supports binary class labels {0,1}.
+    """
+    n, d = X.shape
+    best_gini = float("inf")
+    best_feature = -1
+    best_threshold = None
+
+    def gini(labels: np.ndarray) -> float:
+        if len(labels) == 0:
+            return 0.0
+        p1 = np.mean(labels)
+        p0 = 1 - p1
+        return 1 - (p0 ** 2 + p1 ** 2)
+
+    for feature in range(d):
+        thresholds = np.unique(X[:, feature])
+
+        for threshold in thresholds:
+            left_mask = X[:, feature] <= threshold
+            right_mask = ~left_mask
+
+            y_left = y[left_mask]
+            y_right = y[right_mask]
+
+            w_left = len(y_left) / n
+            w_right = len(y_right) / n
+            weighted_gini = (
+                w_left * gini(y_left) +
+                w_right * gini(y_right)
+            )
+
+            if weighted_gini < best_gini:
+                best_gini = weighted_gini
+                best_feature = feature
+                best_threshold = threshold
+
+    return best_feature, best_threshold
