@@ -1,0 +1,50 @@
+def dollar_bars(trades: list, dollar_threshold: float) -> list:
+    """
+    Generate dollar bars from trade data.
+
+    Args:
+        trades: List of tuples (price, volume)
+        dollar_threshold: Dollar amount threshold for creating a new bar
+
+    Returns:
+        List of dollar bars as tuples:
+        (open, high, low, close, volume, dollar_value)
+    """
+    if dollar_threshold <= 0:
+        return []
+
+    bars = []
+
+    acc_dollar = 0.0
+    acc_volume = 0
+    open_price = high_price = low_price = close_price = None
+
+    for price, volume in trades:
+        trade_dollar = price * volume
+
+        if acc_dollar == 0:
+            open_price = price
+            high_price = price
+            low_price = price
+
+        high_price = max(high_price, price)
+        low_price = min(low_price, price)
+        close_price = price
+        acc_volume += volume
+        acc_dollar += trade_dollar
+
+        if acc_dollar >= dollar_threshold:
+            bars.append((
+                round(open_price, 4),
+                round(high_price, 4),
+                round(low_price, 4),
+                round(close_price, 4),
+                round(acc_volume, 4),
+                round(acc_dollar, 4)
+            ))
+
+            acc_dollar = 0.0
+            acc_volume = 0
+            open_price = high_price = low_price = close_price = None
+
+    return bars
