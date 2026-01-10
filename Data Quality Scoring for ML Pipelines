@@ -1,0 +1,68 @@
+def calculate_data_quality_score(data: list, schema: dict) -> dict:
+    """
+    Calculate data quality metrics for ML pipeline monitoring.
+
+    Args:
+        data: list of dictionaries representing rows of data
+        schema: dictionary defining expected columns and their types
+                {'column_name': {'type': 'numeric'|'categorical'|'boolean', 'nullable': True|False}}
+
+    Returns:
+        dict with keys: 'completeness', 'type_validity', 'uniqueness_ratio', 'overall_score'
+        All values as percentages (0-100), rounded to 2 decimal places.
+    """
+    if not data:
+        return {}
+
+    total_rows = len(data)
+    columns = list(schema.keys())
+    total_fields = total_rows * len(columns)
+
+    non_null_count = 0
+    type_valid_count = 0
+
+    def is_type_valid(value, spec):
+        if value is None:
+            return spec.get("nullable", False)
+
+        expected = spec.get("type")
+        if expected == "numeric":
+            return isinstance(value, (int, float)) and not isinstance(value, bool)
+        elif expected == "categorical":
+            return isinstance(value, str)
+        elif expected == "boolean":
+            return isinstance(value, bool)
+        return False
+
+    for row in data:
+        for col in columns:
+            val = row.get(col)
+
+            if val is not None:
+                non_null_count += 1
+
+            if is_type_valid(val, schema[col]):
+                type_valid_count += 1
+
+    completeness = (non_null_count / total_fields) * 100
+    type_validity = (type_valid_count / total_fields) * 100
+
+    seen = set()
+    for row in data:
+        key = tuple(row.get(col) for col in columns)
+        seen.add(key)
+
+    uniqueness_ratio = (len(seen) / total_rows) * 100
+
+    overall_score = (
+        0.4 * completeness +
+        0.4 * type_validity +
+        0.2 * uniqueness_ratio
+    )
+
+    return {
+        "completeness": round(completeness, 2),
+        "type_validity": round(type_validity, 2),
+        "uniqueness_ratio": round(uniqueness_ratio, 2),
+        "overall_score": round(overall_score, 2),
+    }
