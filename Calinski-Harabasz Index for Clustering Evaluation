@@ -1,0 +1,36 @@
+import numpy as np
+
+def calinski_harabasz_score(X: np.ndarray, labels: np.ndarray) -> float:
+    """
+    Compute the Calinski-Harabasz Index for clustering evaluation.
+    
+    Args:
+        X: numpy array of shape (n_samples, n_features) containing data points
+        labels: numpy array of shape (n_samples,) containing cluster assignments
+    
+    Returns:
+        float: Calinski-Harabasz score (higher is better)
+    """
+    n_samples = X.shape[0]
+    unique_labels = np.unique(labels)
+    k = len(unique_labels)
+
+    if k <= 1 or k == n_samples:
+        return 0.0
+
+    overall_mean = np.mean(X, axis=0)
+
+    W = 0.0  
+    B = 0.0  
+
+    for label in unique_labels:
+        cluster_points = X[labels == label]
+        n_i = cluster_points.shape[0]
+        cluster_mean = np.mean(cluster_points, axis=0)
+
+        W += np.sum((cluster_points - cluster_mean) ** 2)
+
+        B += n_i * np.sum((cluster_mean - overall_mean) ** 2)
+
+    ch_score = (B / (k - 1)) / (W / (n_samples - k))
+    return float(np.round(ch_score, 4))
