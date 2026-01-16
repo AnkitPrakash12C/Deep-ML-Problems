@@ -1,0 +1,76 @@
+def pairwise_preference_judge(comparisons: list, criteria_weights: dict, tie_threshold: float) -> dict:
+    """
+    Analyze pairwise comparisons between LLM responses.
+    
+    Args:
+        comparisons: List of comparison dicts with 'id', 'scores_a', 'scores_b'
+        criteria_weights: Dict mapping criterion names to importance weights
+        tie_threshold: Maximum difference to declare a tie
+    
+    Returns:
+        Dict with 'results', 'win_rate_a', 'win_rate_b', 'tie_rate', 'avg_margin'
+    """
+    n = len(comparisons)
+    if n == 0:
+        return {
+            "results": [],
+            "win_rate_a": 0.0,
+            "win_rate_b": 0.0,
+            "tie_rate": 0.0,
+            "avg_margin": 0.0
+        }
+
+    total_w = sum(criteria_weights.values())
+    if total_w == 0:
+        norm_weights = {k: 0.0 for k in criteria_weights}
+    else:
+        norm_weights = {k: v / total_w for k, v in criteria_weights.items()}
+
+    results = []
+    wins_a = wins_b = ties = 0
+    margins_sum = 0.0
+
+    for comp in comparisons:
+        scores_a = comp["scores_a"]
+        scores_b = comp["scores_b"]
+
+        weighted_a = 0.0
+        weighted_b = 0.0
+
+        for crit, w in norm_weights.items():
+            weighted_a += scores_a.get(crit, 0) * w
+            weighted_b += scores_b.get(crit, 0) * w
+
+        diff = weighted_a - weighted_b
+        margin = abs(diff)
+
+        if margin <= tie_threshold:
+            winner = "tie"
+            ties += 1
+        elif diff > 0:
+            winner = "A"
+            wins_a += 1
+        else:
+            winner = "B"
+            wins_b += 1
+
+        margins_sum += margin
+
+        results.append({
+            "id": comp["id"],
+            "winner": winner,
+            "margin": round(margin, 4)
+        })
+
+    win_rate_a = round(wins_a / n, 4)
+    win_rate_b = round(wins_b / n, 4)
+    tie_rate = round(ties / n, 4)
+    avg_margin = round(margins_sum / n, 4)
+
+    return {
+        "results": results,
+        "win_rate_a": win_rate_a,
+        "win_rate_b": win_rate_b,
+        "tie_rate": tie_rate,
+        "avg_margin": avg_margin
+    }
