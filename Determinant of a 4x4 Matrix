@@ -1,0 +1,48 @@
+def determinant_4x4(matrix: list[list[int | float]]) -> float:
+    def det_3x3(m):
+        return (
+            m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+            - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+            + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
+        )
+
+    det = 0.0
+
+    for col in range(4):
+        minor = []
+        for i in range(1, 4):
+            row = []
+            for j in range(4):
+                if j != col:
+                    row.append(matrix[i][j])
+            minor.append(row)
+
+        sign = -1 if col % 2 == 1 else 1
+
+        det += sign * matrix[0][col] * det_3x3(minor)
+
+    return det
+def determinant_4x4(matrix: list[list[int | float]]) -> float:
+    def det_3x3(m):
+        return (
+            m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+            - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+            + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
+        )
+
+    det = 0.0
+
+    for col in range(4):
+        minor = []
+        for i in range(1, 4):
+            row = []
+            for j in range(4):
+                if j != col:
+                    row.append(matrix[i][j])
+            minor.append(row)
+
+        sign = -1 if col % 2 == 1 else 1
+
+        det += sign * matrix[0][col] * det_3x3(minor)
+
+    return int(det) if det.is_integer() else det
