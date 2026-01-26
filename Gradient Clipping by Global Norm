@@ -1,0 +1,27 @@
+def clip_gradients_by_global_norm(gradients: list[list[float]], max_norm: float) -> list[list[float]]:
+	"""
+	Clip gradients by global norm.
+	
+	Args:
+		gradients: List of gradient arrays
+		max_norm: Maximum allowed global norm
+	
+	Returns:
+		List of clipped gradient arrays
+	"""
+	# Your code here
+	rows = len(gradients)
+	cols = len(gradients[0])
+	gb = 0
+	for i in range(rows):
+		for j in range(len(gradients[i])):
+			gb = gb+(gradients[i][j]**2)
+	gb = gb**(0.5)
+	if gb > max_norm:
+		sf = max_norm/gb
+
+		for i in range(rows):
+			for j in range(len(gradients[i])):
+				gradients[i][j] *= sf
+
+	return gradients
