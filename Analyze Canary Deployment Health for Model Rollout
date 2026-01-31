@@ -1,0 +1,52 @@
+def analyze_canary_deployment(canary_results: list, baseline_results: list, accuracy_tolerance: float = 0.05, latency_tolerance: float = 0.10) -> dict:
+    """
+    Analyze canary deployment health metrics for model rollout decision.
+    
+    Args:
+        canary_results: list of prediction results from canary (new) model
+                       Each dict has 'latency_ms', 'prediction', 'ground_truth'
+        baseline_results: list of prediction results from baseline (existing) model
+                         Each dict has 'latency_ms', 'prediction', 'ground_truth'
+        accuracy_tolerance: max acceptable relative accuracy degradation (0.05 = 5%)
+        latency_tolerance: max acceptable relative latency increase (0.10 = 10%)
+    
+    Returns:
+        dict with canary/baseline metrics and promotion recommendation
+    """
+
+    if not canary_results or not baseline_results:
+        return {}
+
+    def accuracy(results):
+        correct = sum(1 for r in results if r['prediction'] == r['ground_truth'])
+        return correct / len(results)
+
+    def avg_latency(results):
+        return sum(r['latency_ms'] for r in results) / len(results)
+
+    canary_acc = accuracy(canary_results)
+    baseline_acc = accuracy(baseline_results)
+
+    accuracy_change_pct = ((canary_acc - baseline_acc) / baseline_acc) * 100 if baseline_acc != 0 else 0.0
+
+    canary_latency = avg_latency(canary_results)
+    baseline_latency = avg_latency(baseline_results)
+
+    latency_change_pct = ((canary_latency - baseline_latency) / baseline_latency) * 100 if baseline_latency != 0 else 0.0
+
+    accuracy_ok = accuracy_change_pct >= -accuracy_tolerance * 100
+    latency_ok = latency_change_pct <= latency_tolerance * 100
+
+    promote_recommended = accuracy_ok and latency_ok
+
+    return {
+        'canary_accuracy': round(canary_acc, 4),
+        'baseline_accuracy': round(baseline_acc, 4),
+        'accuracy_change_pct': round(accuracy_change_pct, 2),
+        'canary_avg_latency': round(canary_latency, 2),
+        'baseline_avg_latency': round(baseline_latency, 2),
+        'latency_change_pct': round(latency_change_pct, 2),
+        'promote_recommended': promote_recommended
+    }
+    
+    pass
