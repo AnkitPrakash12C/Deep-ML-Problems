@@ -1,0 +1,42 @@
+import numpy as np
+
+def lagrange_optimize(Q: np.ndarray, c: np.ndarray, a: np.ndarray, b: float) -> dict:
+    """
+    Solve constrained quadratic optimization using Lagrange multipliers.
+    
+    Minimize: f(x) = (1/2) x^T Q x + c^T x
+    Subject to: a^T x = b
+    
+    Args:
+        Q: 2x2 symmetric positive definite matrix
+        c: 2-element vector (linear coefficients)
+        a: 2-element vector (constraint coefficients)
+        b: scalar (constraint value)
+    
+    Returns:
+        Dictionary with 'x', 'lambda', and 'objective' keys
+    """
+    Q = np.array(Q, dtype=float)
+    c = np.array(c, dtype=float)
+    a = np.array(a, dtype=float)
+
+    KKT = np.block([
+        [Q, a.reshape(-1, 1)],
+        [a.reshape(1, -1), np.zeros((1, 1))]
+    ])
+
+    rhs = np.concatenate([-c, np.array([b])])
+
+    solution = np.linalg.solve(KKT, rhs)
+
+    x = solution[:2]
+    lam = -solution[2]
+
+    objective = 0.5 * x.T @ Q @ x + c.T @ x
+
+    return {
+        'x': [round(float(x[0]), 4), round(float(x[1]), 4)],
+        'lambda': round(float(lam), 4),
+        'objective': round(float(objective), 4)
+    }
+    pass
