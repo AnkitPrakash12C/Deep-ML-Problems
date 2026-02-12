@@ -1,0 +1,56 @@
+def gridworld_policy_evaluation(policy: dict, gamma: float, threshold: float) -> list[list[float]]:
+    """
+    Evaluate state-value function for a policy on a 5x5 gridworld.
+    
+    Args:
+        policy: dict mapping (row, col) to action probability dicts
+        gamma: discount factor
+        threshold: convergence threshold
+    Returns:
+        5x5 list of floats
+    """
+    # Your code here
+
+    size = 5
+    reward = -1
+
+    V = [[0.0 for _ in range(size)] for _ in range(size)]
+
+    terminals = {(0, 0), (0, 4), (4, 0), (4, 4)}
+
+    actions = {
+        'up': (-1, 0),
+        'down': (1, 0),
+        'left': (0, -1),
+        'right': (0, 1)
+    }
+
+    while True:
+        delta = 0
+        new_V = [row[:] for row in V]  
+
+        for i in range(size):
+            for j in range(size):
+                if (i, j) in terminals:
+                    continue 
+
+                v = 0
+                for action, prob in policy[(i, j)].items():
+                    di, dj = actions[action]
+                    ni, nj = i + di, j + dj
+
+                    if not (0 <= ni < size and 0 <= nj < size):
+                        ni, nj = i, j
+
+                    v += prob * (reward + gamma * V[ni][nj])
+
+                new_V[i][j] = v
+                delta = max(delta, abs(V[i][j] - v))
+
+        V = new_V
+
+        if delta < threshold:
+            break
+
+    return V
+    pass
