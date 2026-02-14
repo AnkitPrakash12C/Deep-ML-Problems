@@ -1,0 +1,40 @@
+import numpy as np
+
+def compute_dr_grpo_objective(log_probs_new: list[list[float]], 
+                               log_probs_old: list[list[float]], 
+                               rewards: list[float], 
+                               epsilon: float = 0.2) -> float:
+    rewards = np.array(rewards, dtype=float)
+
+	"""
+	Compute the Dr. GRPO (GRPO Done Right) clipped objective.
+	
+	Args:
+		log_probs_new: Log probabilities from new policy π_θ
+		              Each response: [log π_θ(o_1|q), log π_θ(o_2|q,o_1), ...]
+		log_probs_old: Log probabilities from old policy π_θ_old
+		rewards: Rewards R(q, o_i) for each response
+		epsilon: Clipping parameter for importance ratios
+	
+	Returns:
+		Dr. GRPO objective value
+	"""
+
+    advantages = rewards - np.mean(rewards)
+
+    total_objective = 0.0
+    G = len(rewards)
+
+    for i in range(G):
+        A_i = advantages[i]
+        response_obj = 0.0
+
+        for log_new, log_old in zip(log_probs_new[i], log_probs_old[i]):
+            ratio = np.exp(log_new - log_old)
+            clipped_ratio = np.clip(ratio, 1 - epsilon, 1 + epsilon)
+            token_obj = min(ratio * A_i, clipped_ratio * A_i)
+            response_obj += token_obj
+
+        total_objective += response_obj
+
+    return total_objective / G
