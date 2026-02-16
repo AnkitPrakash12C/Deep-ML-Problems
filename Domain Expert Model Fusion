@@ -1,0 +1,50 @@
+def fuse_domain_experts(
+    expert_scores: dict[str, dict[str, float]],
+    domain_weights: dict[str, float],
+    fusion_method: str
+) -> float:
+    """
+    Fuse multiple domain expert models into a single score.
+    
+    Args:
+        expert_scores: Dict of expert_name -> {domain: score}
+        domain_weights: Dict of domain -> importance weight
+        fusion_method: 'weighted_average' or 'best_per_domain'
+    
+    Returns:
+        Overall fused score (weighted by domain importance)
+    """
+    domains = domain_weights.keys()
+    fused_domain_scores = {}
+
+    if fusion_method == 'best_per_domain':
+        for domain in domains:
+            best_score = max(
+                expert_scores[expert][domain]
+                for expert in expert_scores
+            )
+            fused_domain_scores[domain] = best_score
+
+    elif fusion_method == 'weighted_average':
+        for domain in domains:
+            scores = [expert_scores[expert][domain] for expert in expert_scores]
+            total_score = sum(scores)
+
+            if total_score == 0:
+                fused_domain_scores[domain] = 0.0
+            else:
+                weighted_sum = 0.0
+                for expert in expert_scores:
+                    score = expert_scores[expert][domain]
+                    weight = score / total_score  
+                    weighted_sum += weight * score
+
+                fused_domain_scores[domain] = weighted_sum
+
+    overall_score = 0.0
+    for domain in domains:
+        overall_score += fused_domain_scores[domain] * domain_weights[domain]
+
+    return overall_score
+    
+    pass
