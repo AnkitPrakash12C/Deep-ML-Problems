@@ -1,0 +1,11 @@
+def exp_weighted_average(Q1, rewards, alpha):
+    
+    k = len(rewards)
+    
+ 
+    result = (1 - alpha) ** k * Q1
+    
+    for i in range(1, k + 1):
+        result += alpha * (1 - alpha) ** (k - i) * rewards[i - 1]
+    
+    return result
