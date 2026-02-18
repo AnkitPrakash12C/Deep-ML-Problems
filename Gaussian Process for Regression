@@ -1,0 +1,141 @@
+import math  # ---------------------------------------- utf-8 encoding ---------------------------------
+
+# This file contains Gaussian Process implementation.
+import numpy as np
+import math
+
+
+
+def rbf_kernel(x, x_prime, sigma=1.0, length_scale=1.0):
+    diff = x - x_prime
+    return sigma**2 * np.exp(-0.5 * np.dot(diff, diff) / length_scale**2)
+    pass
+
+
+def linear_kernel(x, x_prime, sigma_b=1.0, sigma_v=1.0):
+    return sigma_b**2 + sigma_v**2 * np.dot(x, x_prime)
+    pass
+
+
+def matern_kernel(x, x_prime, length_scale=1.0, nu=1.5):
+    r = np.linalg.norm(x - x_prime)
+    if nu == 1.5:
+        factor = (1 + np.sqrt(3)*r/length_scale)
+        return factor * np.exp(-np.sqrt(3)*r/length_scale)
+    else:
+        return np.exp(-r/length_scale)
+    
+    pass
+
+
+def periodic_kernel(x, x_prime, sigma=1.0, length_scale=1.0, period=1.0):
+    r = np.linalg.norm(x - x_prime)
+    return sigma**2 * np.exp(
+        -2 * (np.sin(np.pi * r / period)**2) / length_scale**2
+    )
+
+    pass
+
+
+def rational_quadratic_kernel(x, x_prime, sigma=1.0, length_scale=1.0, alpha=1.0):
+    r2 = np.dot(x - x_prime, x - x_prime)
+    return sigma**2 * (1 + r2 / (2 * alpha * length_scale**2))**(-alpha)
+
+    pass
+
+
+
+# --- BASE CLASS -------------------------------------------------------------
+
+
+class _GaussianProcessBase:
+    def __init__(self, kernel="rbf", noise=1e-5, kernel_params=None):
+        self.kernel = kernel
+        self.noise = noise
+        self.kernel_params = kernel_params or {}
+        pass
+
+    def _select_kernel(self, x1, x2):
+        '''Selects and computes the kernel value for two single data points.'''
+
+        if self.kernel == "rbf":
+            return rbf_kernel(x1, x2, **self.kernel_params)
+        elif self.kernel == "linear":
+            return linear_kernel(x1, x2, **self.kernel_params)
+        elif self.kernel == "matern":
+            return matern_kernel(x1, x2, **self.kernel_params)
+        elif self.kernel == "periodic":
+            return periodic_kernel(x1, x2, **self.kernel_params)
+        elif self.kernel == "rational_quadratic":
+            return rational_quadratic_kernel(x1, x2, **self.kernel_params)
+        else:
+            raise ValueError("Unknown kernel")
+
+        pass
+
+    def _compute_covariance(self, X1, X2):
+        '''
+        Computes the covariance matrix between two sets of points.
+        This method fixes the vectorization bug from the original code.
+        '''
+
+        n1 = X1.shape[0]
+        n2 = X2.shape[0]
+        K = np.zeros((n1, n2))
+        
+        for i in range(n1):
+            for j in range(n2):
+                K[i, j] = self._select_kernel(X1[i], X2[j])
+                
+        return K
+
+        pass
+
+
+# --- REGRESSION MODEL -------------------------------------------------------
+class GaussianProcessRegression(_GaussianProcessBase):
+    def fit(self, X, y):
+
+        self.X_train = np.array(X)
+        self.y_train = np.array(y)
+        
+        K = self._compute_covariance(self.X_train, self.X_train)
+        K += self.noise * np.eye(len(self.X_train))
+        
+        self.K_inv = np.linalg.inv(K)
+
+        pass
+
+    def predict(self, X_test, return_std=False):
+
+        X_test = np.array(X_test)
+        
+        K_star = self._compute_covariance(X_test, self.X_train)
+        
+        mu = K_star @ self.K_inv @ self.y_train
+        
+        if return_std:
+            K_star_star = self._compute_covariance(X_test, X_test)
+            cov = K_star_star - K_star @ self.K_inv @ K_star.T
+            std = np.sqrt(np.diag(cov))
+            return mu, std
+        
+        return mu
+        pass
+
+    def log_marginal_likelihood(self):
+
+        K = self._compute_covariance(self.X_train, self.X_train)
+        K += self.noise * np.eye(len(self.X_train))
+        
+        sign, logdet = np.linalg.slogdet(K)
+        term1 = -0.5 * self.y_train.T @ self.K_inv @ self.y_train
+        term2 = -0.5 * logdet
+        term3 = -0.5 * len(self.X_train) * np.log(2*np.pi)
+        
+        return term1 + term2 + term3
+
+        pass
+
+    def optimize_hyperparameters(self):
+        pass
