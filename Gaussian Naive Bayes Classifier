@@ -1,0 +1,55 @@
+import numpy as np
+
+def gaussian_naive_bayes(X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray) -> np.ndarray:
+	"""
+	Implements Gaussian Naive Bayes classifier.
+	
+	Args:
+		X_train: Training features (shape: N_train x D)
+		y_train: Training labels (shape: N_train)
+		X_test: Test features (shape: N_test x D)
+	
+	Returns:
+		Predicted class labels for X_test (shape: N_test)
+	"""
+	# Your code here
+    epsilon = 1e-9
+    classes = np.unique(y_train)
+    n_samples, n_features = X_train.shape
+    
+    priors = {}
+    means = {}
+    variances = {}
+    
+    for c in classes:
+        X_c = X_train[y_train == c]
+        
+        priors[c] = X_c.shape[0] / n_samples
+        means[c] = np.mean(X_c, axis=0)
+        variances[c] = np.var(X_c, axis=0) + epsilon
+    
+
+    predictions = []
+    
+    for x in X_test:
+        log_posteriors = []
+        
+        for c in classes:
+            mean = means[c]
+            var = variances[c]
+            
+            log_prior = np.log(priors[c])
+            
+            log_likelihood = -0.5 * np.sum(
+                np.log(2 * np.pi * var) +
+                ((x - mean) ** 2) / var
+            )
+            
+            log_posteriors.append(log_prior + log_likelihood)
+        
+        predicted_class = classes[np.argmax(log_posteriors)]
+        predictions.append(predicted_class)
+    
+    return np.array(predictions)
+
+	pass
