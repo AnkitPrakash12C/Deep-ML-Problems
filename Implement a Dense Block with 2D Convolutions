@@ -1,0 +1,46 @@
+import numpy as np
+
+def dense_net_block(input_data, num_layers, growth_rate, kernels, kernel_size=(3, 3)):
+    # Your code here
+    N, H, W, C0 = input_data.shape
+    kh, kw = kernel_size
+    
+    features = input_data
+    
+    pad_h = kh // 2
+    pad_w = kw // 2
+    
+    for l in range(num_layers):
+        
+        current_channels = features.shape[-1]
+        kernel = kernels[l]
+        
+        if kernel.shape != (kh, kw, current_channels, growth_rate):
+            raise ValueError(
+                f"Kernel {l} has shape {kernel.shape}, "
+                f"expected ({kh}, {kw}, {current_channels}, {growth_rate})"
+            )
+        
+        relu_out = np.maximum(features, 0)
+        
+        padded = np.pad(
+            relu_out,
+            ((0, 0), (pad_h, pad_h), (pad_w, pad_w), (0, 0)),
+            mode='constant'
+        )
+        
+        conv_out = np.zeros((N, H, W, growth_rate))
+        
+        for n in range(N):
+            for i in range(H):
+                for j in range(W):
+                    patch = padded[n, i:i+kh, j:j+kw, :]
+                    for g in range(growth_rate):
+                        conv_out[n, i, j, g] = np.sum(
+                            patch * kernel[:, :, :, g]
+                        )
+        
+        features = np.concatenate([features, conv_out], axis=-1)
+    
+    return features
+    pass
