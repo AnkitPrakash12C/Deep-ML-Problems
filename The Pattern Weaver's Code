@@ -1,0 +1,21 @@
+import numpy as np
+
+def softmax(values):
+    values = values - np.max(values)
+    exp_vals = np.exp(values)
+    return exp_vals / np.sum(exp_vals)
+
+def pattern_weaver(n, crystal_values, dimension):
+
+    x = np.array(crystal_values, dtype=float)
+
+    scale = np.sqrt(dimension)
+    scores = np.outer(x, x) / scale
+
+    attention = np.zeros_like(scores)
+    for i in range(n):
+        attention[i] = softmax(scores[i])
+
+    output = attention @ x
+
+    return np.round(output, 4).tolist()
