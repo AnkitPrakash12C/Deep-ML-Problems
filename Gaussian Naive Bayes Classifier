@@ -51,5 +51,4 @@ def gaussian_naive_bayes(X_train: np.ndarray, y_train: np.ndarray, X_test: np.nd
         predictions.append(predicted_class)
     
     return np.array(predictions)
-
 	pass
