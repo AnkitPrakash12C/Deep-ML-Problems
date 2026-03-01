@@ -1,0 +1,46 @@
+import numpy as np
+
+def exponential_distribution(x: list, lam: float) -> dict:
+    """
+    Compute exponential distribution properties.
+    
+    Args:
+        x: Points at which to evaluate PDF and CDF
+        lam: Rate parameter (lambda) of the distribution
+        
+    Returns:
+        Dictionary with 'pdf', 'cdf', 'mean', and 'variance' keys
+    """
+    # Your code here
+    if lam <= 0:
+        return {
+            'pdf': None,
+            'cdf': None,
+            'mean': None,
+            'variance': None
+        }
+
+    pdf_vals = []
+    cdf_vals = []
+
+    for val in x:
+        if val < 0:
+            pdf_vals.append(0.0)
+            cdf_vals.append(0.0)
+        else:
+            pdf = lam * np.exp(-lam * val)
+            cdf = 1 - np.exp(-lam * val)
+
+            pdf_vals.append(round(pdf, 4))
+            cdf_vals.append(round(cdf, 4))
+
+    mean = round(1 / lam, 4)
+    variance = round(1 / (lam ** 2), 4)
+
+    return {
+        'pdf': pdf_vals,
+        'cdf': cdf_vals,
+        'mean': mean,
+        'variance': variance
+    }
+    pass
