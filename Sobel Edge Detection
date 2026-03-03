@@ -1,0 +1,71 @@
+import numpy as np
+
+def sobel_edge_detection(image):
+    """
+    Apply Sobel edge detection to a grayscale image.
+    
+    Args:
+        image: 2D list/array representing a grayscale image
+               with values in range [0, 255]
+    
+    Returns:
+        Edge magnitude image as 2D list with integer values (0-255),
+        or -1 if input is invalid
+    """
+    # Your code here
+
+    if image is None:
+        return -1
+
+    try:
+        img = np.array(image, dtype=float)
+    except:
+        return -1
+
+    if img.ndim != 2:
+        return -1
+
+    H, W = img.shape
+
+    if H < 3 or W < 3:
+        return -1
+
+    if np.any(img < 0) or np.any(img > 255):
+        return -1
+
+    Gx_kernel = np.array([
+        [-1, 0, 1],
+        [-2, 0, 2],
+        [-1, 0, 1]
+    ])
+
+    Gy_kernel = np.array([
+        [-1, -2, -1],
+        [ 0,  0,  0],
+        [ 1,  2,  1]
+    ])
+
+    out_H = H - 2
+    out_W = W - 2
+
+    magnitude = np.zeros((out_H, out_W))
+
+    for i in range(out_H):
+        for j in range(out_W):
+            region = img[i:i+3, j:j+3]
+
+            Gx = np.sum(region * Gx_kernel)
+            Gy = np.sum(region * Gy_kernel)
+
+            magnitude[i, j] = np.sqrt(Gx**2 + Gy**2)
+
+    max_val = np.max(magnitude)
+
+    if max_val == 0:
+        return magnitude.astype(int).tolist()
+
+    magnitude = (magnitude / max_val) * 255
+    magnitude = np.round(magnitude).astype(int)
+
+    return magnitude.tolist()
+    pass
