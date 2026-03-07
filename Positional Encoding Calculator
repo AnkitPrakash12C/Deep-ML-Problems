@@ -16,3 +16,4 @@ def pos_encoding(position: int, d_model: int):
     pos_encoding[:, 1::2] = np.cos(angle_rads[:, 1::2])
 
     return pos_encoding.astype(np.float16)
+	pass
