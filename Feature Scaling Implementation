@@ -21,6 +21,7 @@ def feature_scaling(data: np.ndarray) -> (np.ndarray, np.ndarray):
 
     standardized_data = np.round(standardized_data, 4)
     normalized_data = np.round(normalized_data, 4)
+	pass
 
     standardized_data = np.round(standardized_data, 4)
     normalized_data = np.round(normalized_data, 4)
