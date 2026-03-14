@@ -1,0 +1,38 @@
+import numpy as np
+
+def svd_2x2(A: np.ndarray) -> tuple:
+    """
+    Compute SVD of a 2x2 matrix.
+    
+    Args:
+        A: 2x2 numpy array
+    
+    Returns:
+        U: 2x2 orthogonal matrix (left singular vectors)
+        s: 1D array of singular values
+        V: 2x2 matrix (right singular vectors)
+    """
+    # Your code here
+    ATA = A.T @ A
+
+    eigvals, V = np.linalg.eigh(ATA)
+
+    s = np.sqrt(np.maximum(eigvals, 0))
+
+    idx = np.argsort(-s)
+    s = s[idx]
+    V = V[:, idx]
+
+    U = np.zeros((2,2))
+    for i in range(2):
+        if s[i] > 1e-12:
+            U[:, i] = (A @ V[:, i]) / s[i]
+
+    if np.linalg.norm(U[:,1]) == 0:
+        U[:,1] = np.array([-U[1,0], U[0,0]])
+
+    U[:,0] /= np.linalg.norm(U[:,0])
+    U[:,1] /= np.linalg.norm(U[:,1])
+
+    return U, s, V.T
+    pass
