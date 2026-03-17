@@ -35,31 +35,31 @@ def simulate_clt(distribution: str, n: int, runs: int = 10000, seed: int = 42) -
     # Your implementation here
 
     if distribution == 'uniform':
-        mean = 0.5
-        var = 1/12
-
         samples = np.random.uniform(0, 1, size=(runs, n))
+        mu = 0.5
+        sigma = np.sqrt(1/12)
 
     elif distribution == 'exponential':
-        mean = 1.0
-        var = 1.0
-
         samples = np.random.exponential(scale=1.0, size=(runs, n))
+        mu = 1.0
+        sigma = 1.0
 
     elif distribution == 'bernoulli':
         p = 0.3
-        mean = p
-        var = p * (1 - p)
+        samples = (np.random.rand(runs, n) < p).astype(int)
+        mu = p
+        sigma = np.sqrt(p * (1 - p))
 
-        samples = np.random.binomial(1, p, size=(runs, n))
+    else:
+        raise ValueError("Unsupported distribution")
 
-    sample_means = np.mean(samples, axis=1)
+    sample_means = samples.mean(axis=1)
 
-    std_error = np.sqrt(var / n)
-    z_scores = (sample_means - mean) / std_error
+    z_scores = (sample_means - mu) / (sigma / np.sqrt(n))
 
     return {
-        'mean': round(float(np.mean(z_scores)), 3),
-        'std': round(float(np.std(z_scores)), 3)
+        'mean': float(np.round(np.mean(z_scores), 3)),
+        'std': float(np.round(np.std(z_scores), 3))
     }
+
     pass
