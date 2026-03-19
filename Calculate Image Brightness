@@ -1,0 +1,29 @@
+def calculate_brightness(img):
+
+    if not img or not isinstance(img, list):
+        return -1
+    
+    row_length = None
+    total = 0
+    count = 0
+    
+    for row in img:
+        if not isinstance(row, list) or not row:
+            return -1
+        
+        if row_length is None:
+            row_length = len(row)
+        elif len(row) != row_length:
+            return -1
+        
+        for pixel in row:
+            if not isinstance(pixel, (int, float)) or pixel < 0 or pixel > 255:
+                return -1
+            
+            total += pixel
+            count += 1
+    
+    if count == 0:
+        return -1
+    
+    return round(total / count, 2)
