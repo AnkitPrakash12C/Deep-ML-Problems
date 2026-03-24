@@ -23,6 +23,7 @@ def n_step_td_prediction(
         V: Estimated state values as numpy array of shape (n_states,)
     """
     # Your code here
+
     V = np.zeros(n_states)
 
     for episode in episodes:
