@@ -1,0 +1,34 @@
+def softmax_derivative(x: list[float]) -> list[list[float]]:
+    """
+	Compute the Jacobian matrix of the softmax function.
+	
+	Args:
+		x: Input vector of real numbers
+		
+	Returns:
+		Jacobian matrix J where J[i][j] = d(softmax_i)/d(x_j)
+    """
+
+	# Your code here
+
+    import math
+
+    max_x = max(x)
+    exp_x = [math.exp(i - max_x) for i in x]
+    sum_exp = sum(exp_x)
+    s = [val / sum_exp for val in exp_x]
+
+    n = len(x)
+    
+    J = [[0.0 for _ in range(n)] for _ in range(n)]
+    
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                J[i][j] = s[i] * (1 - s[i])
+            else:
+                J[i][j] = -s[i] * s[j]
+
+    J = [[round(val, 4) for val in row] for row in J]
+
+    return J
