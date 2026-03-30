@@ -1,0 +1,45 @@
+import numpy as np
+
+FP8_MAX = 448.0
+
+def fp8_block_quantize(tensor: np.ndarray, block_size: int = 128):
+    N = tensor.shape[0]
+    assert N % block_size == 0
+    
+    num_blocks = N // block_size
+    
+    quantized = np.zeros_like(tensor, dtype=np.float32)
+    scales = np.zeros(num_blocks, dtype=np.float32)
+    
+    for i in range(num_blocks):
+        start = i * block_size
+        end = start + block_size
+        
+        block = tensor[start:end]
+        max_abs = np.max(np.abs(block))
+        
+        scale = max_abs / FP8_MAX if max_abs != 0 else 1.0
+        
+        q = block / scale
+        q = np.clip(q, -FP8_MAX, FP8_MAX)
+        q = np.round(q)  
+        
+        quantized[start:end] = q
+        scales[i] = scale
+    
+    return quantized, scales
+
+
+def fp8_block_dequantize(quantized: np.ndarray, scales: np.ndarray, block_size: int = 128):
+    N = quantized.shape[0]
+    num_blocks = N // block_size
+    
+    dequantized = np.zeros_like(quantized, dtype=np.float32)
+    
+    for i in range(num_blocks):
+        start = i * block_size
+        end = start + block_size
+        
+        dequantized[start:end] = quantized[start:end] * scales[i]
+    
+    return dequantized
