@@ -1,0 +1,20 @@
+import numpy as np
+
+def detect_attention_sinks(attn_weights: np.ndarray, threshold: float) -> dict:
+    num_heads, seq_len, _ = attn_weights.shape
+
+    avg_attention = np.mean(attn_weights, axis=(0, 1))
+
+    avg_attention_list = [round(float(val), 4) for val in avg_attention]
+
+    sink_positions = [
+        i for i, val in enumerate(avg_attention_list) if val >= threshold
+    ]
+
+    sink_scores = [round(float(avg_attention_list[i]), 4) for i in sink_positions]
+
+    return {
+        "sink_positions": sorted(sink_positions),
+        "avg_attention_received": avg_attention_list,
+        "sink_scores": sink_scores
+    }
