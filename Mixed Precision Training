@@ -1,0 +1,33 @@
+import numpy as np
+
+class MixedPrecision:
+    def __init__(self, loss_scale=1024.0):
+        # Initialize loss scaling factor
+        self.loss_scale = loss_scale
+        pass
+
+    def forward(self, weights, inputs, targets):
+        # Perform forward pass with float16, return scaled loss as float32
+        weights_fp16 = weights.astype(np.float16)
+        inputs_fp16 = inputs.astype(np.float16)
+        targets_fp16 = targets.astype(np.float16)
+
+        preds = inputs_fp16 @ weights_fp16  
+
+        diff = preds - targets_fp16
+        mse_loss = np.mean(diff * diff)
+
+        scaled_loss = mse_loss * self.loss_scale
+        return float(np.float32(scaled_loss))
+
+    def backward(self, gradients):
+        # Unscale gradients and check for overflow, return as float32
+        grads_fp32 = gradients.astype(np.float32)
+
+        if not np.all(np.isfinite(grads_fp32)):
+            return np.zeros_like(grads_fp32, dtype=np.float32)
+
+        grads_fp32 = grads_fp32 / self.loss_scale
+
+        return grads_fp32
+        pass
