@@ -1,0 +1,26 @@
+import numpy as np
+
+def lagrange_optimize(Q: np.ndarray, c: np.ndarray, a: np.ndarray, b: float) -> dict:
+    Q = np.array(Q, dtype=np.float64)
+    c = np.array(c, dtype=np.float64)
+    a = np.array(a, dtype=np.float64)
+
+    KKT = np.block([
+        [Q, -a.reshape(-1, 1)],
+        [a.reshape(1, -1), np.array([[0.0]])]
+    ])
+
+    rhs = np.concatenate([-c, np.array([b])])
+
+    solution = np.linalg.solve(KKT, rhs)
+
+    x = solution[:2]
+    lam = solution[2]
+
+    objective = 0.5 * x @ Q @ x + c @ x
+
+    return {
+        'x': np.round(x, 4).tolist(),
+        'lambda': round(float(lam), 4),
+        'objective': round(float(objective), 4)
+    }
