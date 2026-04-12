@@ -1,0 +1,45 @@
+def ngram_speculation(token_ids: list[int], n: int, context: tuple[int, ...], k: int) -> list[tuple[int, float]]:
+    """
+    Build an n-gram speculation dictionary from token_ids and look up
+    the top-k most probable next tokens for the given context.
+    
+    Args:
+        token_ids: List of integer token IDs representing the sequence history
+        n: The n-gram order (e.g., 3 means trigrams: 2-token prefix + 1 next token)
+        context: A tuple of (n-1) token IDs to use as the lookup prefix
+        k: Number of top candidates to return
+    
+    Returns:
+        A list of (token_id, probability) tuples, sorted by probability descending,
+        then by token_id ascending for ties. Returns empty list if context not found.
+    """
+    # Your code here
+    if len(context) != n - 1 or len(token_ids) < n:
+        return []
+
+    ngram_counts = {}  
+
+    for i in range(len(token_ids) - n + 1):
+        prefix = tuple(token_ids[i:i + n - 1])
+        next_token = token_ids[i + n - 1]
+
+        if prefix not in ngram_counts:
+            ngram_counts[prefix] = {}
+
+        ngram_counts[prefix][next_token] = ngram_counts[prefix].get(next_token, 0) + 1
+
+    if context not in ngram_counts:
+        return []
+
+    next_token_counts = ngram_counts[context]
+    total = sum(next_token_counts.values())
+
+    probs = []
+    for token, count in next_token_counts.items():
+        prob = round(count / total, 4)
+        probs.append((token, prob))
+
+    probs.sort(key=lambda x: (-x[1], x[0]))
+
+    return probs[:k]
+    pass
