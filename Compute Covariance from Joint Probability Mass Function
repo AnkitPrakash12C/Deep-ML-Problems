@@ -1,0 +1,34 @@
+import numpy as np
+
+def covariance_from_joint_pmf(x_values: list, y_values: list, joint_pmf: np.ndarray) -> float:
+    """
+    Compute the covariance of X and Y from their joint PMF.
+    
+    Args:
+        x_values: List of possible values for X
+        y_values: List of possible values for Y
+        joint_pmf: 2D numpy array where joint_pmf[i][j] = P(X=x_values[i], Y=y_values[j])
+    
+    Returns:
+        Covariance of X and Y as a float
+    """
+    # Your code here
+    x_values = np.array(x_values, dtype=np.float64)
+    y_values = np.array(y_values, dtype=np.float64)
+    joint_pmf = np.array(joint_pmf, dtype=np.float64)
+
+    px = np.sum(joint_pmf, axis=1)  
+    py = np.sum(joint_pmf, axis=0)  
+
+    E_X = np.sum(x_values * px)
+    E_Y = np.sum(y_values * py)
+
+    E_XY = 0.0
+    for i in range(len(x_values)):
+        for j in range(len(y_values)):
+            E_XY += x_values[i] * y_values[j] * joint_pmf[i][j]
+
+    covariance = E_XY - (E_X * E_Y)
+
+    return float(covariance)
+    pass
