@@ -1,0 +1,63 @@
+import numpy as np
+
+def non_maximum_suppression(boxes, scores, iou_threshold):
+    """
+    Apply Non-Maximum Suppression (NMS) to bounding boxes.
+    
+    Args:
+        boxes: Array-like of shape (N, 4) with boxes in format [x1, y1, x2, y2]
+        scores: Array-like of shape (N,) with confidence scores
+        iou_threshold: float, IoU threshold for suppression (0 to 1)
+    
+    Returns:
+        List of indices of kept boxes, ordered by descending score
+        Returns -1 for invalid inputs
+    """
+    # Your code here
+
+    boxes = np.array(boxes, dtype=float)
+    scores = np.array(scores, dtype=float)
+
+    if len(boxes) == 0:
+        return []
+    
+    if boxes.ndim != 2 or boxes.shape[1] != 4:
+        return -1
+    
+    if scores.ndim != 1 or len(scores) != len(boxes):
+        return -1
+    
+    if not (0 <= iou_threshold <= 1):
+        return -1
+
+    x1, y1, x2, y2 = boxes[:,0], boxes[:,1], boxes[:,2], boxes[:,3]
+    areas = (x2 - x1) * (y2 - y1)
+
+    indices = np.argsort(-scores)
+    keep = []
+
+    while len(indices) > 0:
+        current = indices[0]
+        keep.append(int(current)) 
+
+        if len(indices) == 1:
+            break
+
+        rest = indices[1:]
+
+        xx1 = np.maximum(x1[current], x1[rest])
+        yy1 = np.maximum(y1[current], y1[rest])
+        xx2 = np.minimum(x2[current], x2[rest])
+        yy2 = np.minimum(y2[current], y2[rest])
+
+        inter_w = np.maximum(0, xx2 - xx1)
+        inter_h = np.maximum(0, yy2 - yy1)
+        intersection = inter_w * inter_h
+
+        union = areas[current] + areas[rest] - intersection
+        iou = intersection / (union + 1e-8)
+
+        indices = rest[iou <= iou_threshold]
+
+    return keep
+    pass
