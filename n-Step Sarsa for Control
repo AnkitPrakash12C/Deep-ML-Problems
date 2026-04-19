@@ -1,0 +1,78 @@
+import numpy as np
+
+def n_step_sarsa_control(env: dict, terminal_states: set, start_state: int, num_states: int, num_actions: int, n: int, alpha: float, gamma: float, epsilon: float, num_episodes: int, seed: int = 42) -> list:
+    """
+    Implement n-step Sarsa for control.
+    
+    Args:
+        env: dict mapping (state, action) -> (next_state, reward)
+        terminal_states: set of terminal state indices
+        start_state: starting state for each episode
+        num_states: number of states
+        num_actions: number of actions
+        n: number of steps for n-step return
+        alpha: learning rate
+        gamma: discount factor
+        epsilon: exploration rate for epsilon-greedy
+        num_episodes: number of episodes to run
+        seed: random seed
+    
+    Returns:
+        Q-table as list of lists, rounded to 4 decimal places
+    """
+    
+    rng = np.random.RandomState(seed)
+    Q = np.zeros((num_states, num_actions), dtype=float)
+    
+    def epsilon_greedy(state):
+        if rng.rand() < epsilon:
+            return rng.randint(num_actions)
+        return int(np.argmax(Q[state]))
+    
+    for _ in range(num_episodes):
+        S = [start_state]
+        A = [epsilon_greedy(start_state)]
+        R = [0.0]
+        
+        T = float('inf')
+        t = 0
+        
+        while True:
+            if t < T:
+                s_t, a_t = S[t], A[t]
+                
+                if (s_t, a_t) in env:
+                    s_next, r = env[(s_t, a_t)]
+                else:
+                    s_next, r = s_t, 0.0
+                
+                S.append(s_next)
+                R.append(r)
+                
+                if s_next in terminal_states:
+                    T = t + 1
+                else:
+                    A.append(epsilon_greedy(s_next))
+            
+            tau = t - n + 1
+            
+            if tau >= 0:
+                upper = tau + n if T == float('inf') else min(tau + n, int(T))
+                
+                G = 0.0
+                for i in range(tau + 1, upper + 1):
+                    G += (gamma ** (i - tau - 1)) * R[i]
+                
+                if tau + n < T:
+                    G += (gamma ** n) * Q[S[tau + n], A[tau + n]]
+                
+                s_tau, a_tau = S[tau], A[tau]
+                Q[s_tau, a_tau] += alpha * (G - Q[s_tau, a_tau])
+            
+            if tau == T - 1:
+                break
+            
+            t += 1
+    
+    return [[round(v, 4) for v in row] for row in Q]
+    pass
