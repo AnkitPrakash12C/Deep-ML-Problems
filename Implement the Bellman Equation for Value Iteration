@@ -12,9 +12,6 @@ def bellman_update(V, transitions, gamma):
     """
     # TODO: Implement Bellman update
 
-import numpy as np
-
-def bellman_update(V, transitions, gamma):
     n_states = len(transitions)
     new_V = np.zeros(n_states)
     
