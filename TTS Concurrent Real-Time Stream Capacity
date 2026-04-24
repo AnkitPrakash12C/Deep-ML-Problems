@@ -1,0 +1,41 @@
+import math
+def tts_stream_capacity(rtf: float, num_gpus: int, mem_per_stream_mb: float, total_gpu_mem_mb: float, audio_bitrate_kbps: float, total_bandwidth_mbps: float) -> dict:
+    """
+    Calculate the maximum number of concurrent real-time TTS streams.
+
+    Args:
+        rtf: Real-Time Factor (compute time / audio duration) per stream per GPU
+        num_gpus: Number of GPUs available
+        mem_per_stream_mb: GPU memory required per stream in MB
+        total_gpu_mem_mb: Total GPU memory available in MB
+        audio_bitrate_kbps: Audio bitrate per stream in kbps
+        total_bandwidth_mbps: Total network bandwidth in Mbps
+
+    Returns:
+        Dictionary with capacity breakdown, max concurrent streams, and bottleneck
+    """
+    # Your code here
+    compute_capacity = int((1 / rtf) * num_gpus)
+
+    memory_capacity = int(total_gpu_mem_mb // mem_per_stream_mb)
+
+    total_bandwidth_kbps = total_bandwidth_mbps * 1000
+    bandwidth_capacity = int(total_bandwidth_kbps // audio_bitrate_kbps)
+
+    max_concurrent_streams = min(compute_capacity, memory_capacity, bandwidth_capacity)
+
+    if max_concurrent_streams == compute_capacity:
+        bottleneck = "compute"
+    elif max_concurrent_streams == memory_capacity:
+        bottleneck = "memory"
+    else:
+        bottleneck = "bandwidth"
+
+    return {
+        'compute_capacity': compute_capacity,
+        'memory_capacity': memory_capacity,
+        'bandwidth_capacity': bandwidth_capacity,
+        'max_concurrent_streams': max_concurrent_streams,
+        'bottleneck': bottleneck
+    }
+    pass
