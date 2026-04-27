@@ -1,5 +1,6 @@
 import numpy as np
 from statistics import NormalDist
+import math
 
 def analyze_ab_test(control_outcomes: list, treatment_outcomes: list, confidence_level: float = 0.95, min_detectable_effect: float = 0.02) -> dict:
     """
