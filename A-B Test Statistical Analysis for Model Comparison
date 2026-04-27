@@ -1,0 +1,79 @@
+import numpy as np
+from statistics import NormalDist
+
+def analyze_ab_test(control_outcomes: list, treatment_outcomes: list, confidence_level: float = 0.95, min_detectable_effect: float = 0.02) -> dict:
+    """
+    Analyze A/B test results for model comparison with statistical rigor.
+    
+    Args:
+        control_outcomes: List of binary outcomes (0 or 1) for control group
+        treatment_outcomes: List of binary outcomes (0 or 1) for treatment group
+        confidence_level: Confidence level for statistical tests (default 0.95)
+        min_detectable_effect: Minimum absolute effect size considered practically significant
+    
+    Returns:
+        dict with statistical analysis results and recommendation
+    """
+
+
+    if not control_outcomes or not treatment_outcomes:
+        return {}
+
+    n_c = len(control_outcomes)
+    n_t = len(treatment_outcomes)
+
+    x_c = sum(control_outcomes)
+    x_t = sum(treatment_outcomes)
+
+    p_c = x_c / n_c
+    p_t = x_t / n_t
+
+    absolute_lift = p_t - p_c
+    relative_lift = (absolute_lift / p_c * 100) if p_c != 0 else 0
+
+    p_pool = (x_c + x_t) / (n_c + n_t)
+    se_pool = math.sqrt(p_pool * (1 - p_pool) * (1/n_c + 1/n_t))
+
+    z_stat = (p_t - p_c) / se_pool if se_pool != 0 else 0
+
+    p_value = 2 * (1 - NormalDist().cdf(abs(z_stat)))
+
+    se_unpooled = math.sqrt((p_c * (1 - p_c) / n_c) + (p_t * (1 - p_t) / n_t))
+
+    alpha = 1 - confidence_level
+    z_crit = NormalDist().inv_cdf(1 - alpha / 2)
+
+    ci_lower = absolute_lift - z_crit * se_unpooled
+    ci_upper = absolute_lift + z_crit * se_unpooled
+
+    statistically_significant = p_value < alpha
+    practically_significant = abs(absolute_lift) >= min_detectable_effect
+
+    power = 0.8
+    z_beta = NormalDist().inv_cdf(power)
+
+    pooled_var = p_c * (1 - p_c) + p_t * (1 - p_t)
+    required_n = ((z_crit + z_beta) ** 2 * pooled_var) / (min_detectable_effect ** 2)
+    required_n = math.ceil(required_n)
+
+    if not statistically_significant:
+        recommendation = 'continue_testing'
+    elif absolute_lift > 0 and practically_significant:
+        recommendation = 'launch_treatment'
+    else:
+        recommendation = 'keep_control'
+
+    return {
+        'control_rate': round(p_c, 4),
+        'treatment_rate': round(p_t, 4),
+        'absolute_lift': round(absolute_lift, 4),
+        'relative_lift_pct': round(relative_lift, 2),
+        'z_statistic': round(z_stat, 4),
+        'p_value': round(p_value, 4),
+        'confidence_interval': (round(ci_lower, 4), round(ci_upper, 4)),
+        'statistically_significant': statistically_significant,
+        'practically_significant': practically_significant,
+        'required_sample_size_per_group': required_n,
+        'recommendation': recommendation
+    }
+    pass
