@@ -1,0 +1,42 @@
+import numpy as np
+import math
+
+
+def mtp_loss(main_logits, main_targets, mtp_logits, mtp_targets, mtp_weight):
+    """
+    Compute the combined LM + depth-1 Multi-Token Prediction loss.
+
+    Args:
+        main_logits: array-like (N, V)
+        main_targets: array-like (N,) integer token ids
+        mtp_logits: array-like (N-1, V)
+        mtp_targets: array-like (N-1,) integer token ids
+        mtp_weight: float
+
+    Returns:
+        float: total loss rounded to 6 decimals
+    """
+
+    def cross_entropy_loss(logits, targets):
+        logits = np.array(logits, dtype=float)
+        targets = np.array(targets, dtype=int)
+
+        max_logits = np.max(logits, axis=1, keepdims=True)
+        stabilized = logits - max_logits
+
+        log_sum_exp = np.log(np.sum(np.exp(stabilized), axis=1)) + max_logits.flatten()
+
+        target_logits = logits[np.arange(len(targets)), targets]
+
+        loss = log_sum_exp - target_logits
+
+        return np.mean(loss)
+
+    lm_loss = cross_entropy_loss(main_logits, main_targets)
+
+    mtp_loss_val = cross_entropy_loss(mtp_logits, mtp_targets)
+
+    total_loss = lm_loss + mtp_weight * mtp_loss_val
+
+    return round(float(total_loss), 6)
+    pass
