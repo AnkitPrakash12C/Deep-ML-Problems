@@ -1,0 +1,53 @@
+def detect_contamination(test_examples, train_corpus, n, threshold):
+    """
+    Args:
+        test_examples: list[str] - test set documents
+        train_corpus:  list[str] - training set documents
+        n: int - n-gram size
+        threshold: float - coverage ratio in [0, 1] above which an example is flagged
+
+    Returns:
+        float - contamination percentage in [0, 100]
+    """
+    train_ngrams = set()
+
+    for doc in train_corpus:
+        tokens = doc.split()
+
+        for i in range(len(tokens) - n + 1):
+            gram = tuple(tokens[i:i+n])
+            train_ngrams.add(gram)
+
+    contaminated_count = 0
+
+    for example in test_examples:
+
+        tokens = example.split()
+        L = len(tokens)
+
+        if L == 0 or L < n:
+            continue
+
+        covered = [False] * L
+
+        for i in range(L - n + 1):
+
+            gram = tuple(tokens[i:i+n])
+
+            if gram in train_ngrams:
+
+                for j in range(i, i + n):
+                    covered[j] = True
+
+        coverage = sum(covered) / L
+
+        if coverage >= threshold:
+            contaminated_count += 1
+
+    if len(test_examples) == 0:
+        return 0.0
+
+    percentage = (contaminated_count / len(test_examples)) * 100
+
+    return float(percentage)
+    pass
