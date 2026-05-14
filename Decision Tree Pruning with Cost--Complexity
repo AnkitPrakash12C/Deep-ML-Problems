@@ -1,0 +1,37 @@
+def compute_pruning_alphas(tree: dict) -> list:
+    """
+    Computes effective alpha values for cost-complexity pruning.
+    
+    Args:
+        tree: Dictionary representing a decision tree node with keys:
+              - 'samples': number of samples reaching this node
+              - 'errors': misclassification count if node becomes a leaf
+              - 'left': left child subtree (dict) or None
+              - 'right': right child subtree (dict) or None
+        
+    Returns:
+        List of effective alpha values for internal nodes, sorted ascending.
+    """
+    # Your code here
+
+    alphas = []
+
+    def dfs(node):
+        if node['left'] is None and node['right'] is None:
+            return node['errors'], 1
+
+        left_error, left_leaves = dfs(node['left'])
+        right_error, right_leaves = dfs(node['right'])
+
+        subtree_error = left_error + right_error
+        total_leaves = left_leaves + right_leaves
+
+        alpha = (node['errors'] - subtree_error) / (total_leaves - 1)
+        alphas.append(float(alpha))
+
+        return subtree_error, total_leaves
+
+    dfs(tree)
+
+    return sorted(alphas)
+    pass
