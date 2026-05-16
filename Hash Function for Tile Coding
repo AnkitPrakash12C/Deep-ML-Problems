@@ -1,0 +1,37 @@
+import numpy as np
+
+def tile_coding_hash(state: list,
+                     num_tilings: int,
+                     tiles_per_dim: int,
+                     memory_size: int,
+                     state_bounds: list = None) -> list:
+    """
+    Compute active tile indices using tile coding with hash-based index mapping.
+    """
+
+    if state_bounds is None:
+        state_bounds = [(0.0, 1.0)] * len(state)
+
+    active_tiles = []
+
+    for tiling in range(num_tilings):
+        offset = tiling / num_tilings  
+		
+        coords = [tiling]               
+
+        for dim, value in enumerate(state):
+            low, high = state_bounds[dim]
+
+            scaled = ((value - low) / (high - low)) * tiles_per_dim
+
+            tile_coord = int(np.floor(scaled + offset))
+            coords.append(tile_coord)
+
+        h = 5381
+        for c in coords:
+            h = ((h * 33) + c) & 0xFFFFFFFF  
+
+        index = h % memory_size
+        active_tiles.append(index)
+
+    return active_tiles
