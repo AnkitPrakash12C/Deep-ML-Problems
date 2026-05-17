@@ -1,0 +1,56 @@
+import numpy as np
+
+def simulate_lock_free_sync(
+    n_workers: int,
+    flag_size: int,
+    worker_ops: list,
+    max_rounds: int = 1000
+) -> dict:
+
+    flags = [0] * flag_size          
+    completed = []                   
+    positions = [0] * n_workers      
+    deadlock = False
+
+    for _ in range(max_rounds):
+        progress = False
+        all_done = True
+
+        for worker in range(n_workers):
+            if positions[worker] >= len(worker_ops[worker]):
+                continue
+
+            all_done = False
+            op = worker_ops[worker][positions[worker]]
+            op_type = op[0]
+
+            if op_type == "set":
+                _, flag_idx, value = op
+                flags[flag_idx] = value
+                positions[worker] += 1
+                progress = True
+
+            elif op_type == "wait":
+                _, flag_idx, value = op
+                if flags[flag_idx] == value:
+                    positions[worker] += 1   
+                    progress = True
+
+            elif op_type == "work":
+                _, worker_id, task_id = op
+                completed.append((worker_id, task_id))
+                positions[worker] += 1
+                progress = True
+
+        if all_done:
+            break
+
+        if not progress:
+            deadlock = True
+            break
+
+    return {
+        "completed": completed,
+        "flags": flags,
+        "deadlock": deadlock
+    }
