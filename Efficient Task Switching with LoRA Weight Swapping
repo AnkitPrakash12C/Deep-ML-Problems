@@ -1,0 +1,31 @@
+import numpy as np
+
+def lora_task_switch(W0: np.ndarray, adapters: list, task_sequence: list,
+                     x: np.ndarray, scaling: float = 1.0) -> np.ndarray:
+    """
+    Apply LoRA-adapted transformations for a sequence of tasks.
+
+    Args:
+        W0: Base frozen weight matrix (d_out, d_in)
+        adapters: List of (A, B) tuples
+        task_sequence: Adapter indices to apply
+        x: Input batch (batch, d_in)
+        scaling: Scalar multiplier for LoRA update
+
+    Returns:
+        Array of shape (len(task_sequence), batch, d_out)
+    """
+    outputs = []
+
+    for task_idx in task_sequence:
+        A, B = adapters[task_idx]
+
+        delta_W = B @ A                  
+
+        W_eff = W0 + scaling * delta_W
+
+        out = x @ W_eff.T               
+
+        outputs.append(out)
+
+    return np.stack(outputs, axis=0)
