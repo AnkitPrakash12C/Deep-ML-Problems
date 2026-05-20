@@ -1,0 +1,57 @@
+import numpy as np
+
+def process_variable_resets(rewards: np.ndarray, dones: np.ndarray, gamma: float) -> dict:
+    """
+    Process trajectory data from parallel environments with variable reset times.
+    
+    Args:
+        rewards: np.ndarray of shape (T, N), rewards at each timestep per environment
+        dones: np.ndarray of shape (T, N), boolean terminal flags
+        gamma: float, discount factor
+    
+    Returns:
+        Dictionary with keys:
+            'episode_returns': list of floats (completed episode discounted returns)
+            'episode_lengths': list of ints (completed episode lengths)
+            'partial_returns': list of N floats (ongoing episode returns)
+            'partial_lengths': list of N ints (ongoing episode lengths)
+            'mean_return': float (mean of completed returns, 0.0 if none)
+            'total_episodes': int (number of completed episodes)
+    """
+    T, N = rewards.shape
+
+    partial_returns = np.zeros(N, dtype=float)
+    partial_lengths = np.zeros(N, dtype=int)
+    discount_powers = np.ones(N, dtype=float)  
+
+    episode_returns = []
+    episode_lengths = []
+
+    for t in range(T):
+        for env in range(N):
+            partial_returns[env] += discount_powers[env] * rewards[t, env]
+            partial_lengths[env] += 1
+            discount_powers[env] *= gamma
+
+            if dones[t, env]:
+                episode_returns.append(round(float(partial_returns[env]), 4))
+                episode_lengths.append(int(partial_lengths[env]))
+
+                partial_returns[env] = 0.0
+                partial_lengths[env] = 0
+                discount_powers[env] = 1.0
+
+    mean_return = (
+        round(float(np.mean(episode_returns)), 4)
+        if episode_returns else 0.0
+    )
+
+    return {
+        "episode_returns": episode_returns,
+        "episode_lengths": episode_lengths,
+        "partial_returns": [round(float(x), 4) for x in partial_returns],
+        "partial_lengths": partial_lengths.tolist(),
+        "mean_return": mean_return,
+        "total_episodes": len(episode_returns)
+    }
+    pass
