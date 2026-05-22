@@ -1,0 +1,72 @@
+def afterstate_value_iteration(
+    states: list,
+    actions: dict,
+    afterstate_map: dict,
+    env_dynamics: dict,
+    gamma: float,
+    theta: float = 0.0001,
+    max_iterations: int = 1000
+) -> tuple:
+    """
+    Perform value iteration using afterstate value functions.
+    
+    Args:
+        states: List of environment states
+        actions: Dict mapping state -> list of available actions
+        afterstate_map: Dict mapping (state, action) -> afterstate
+        env_dynamics: Dict mapping afterstate -> list of (prob, reward, next_state)
+        gamma: Discount factor
+        theta: Convergence threshold
+        max_iterations: Maximum sweeps
+    
+    Returns:
+        Tuple of (afterstate_values, policy)
+    """
+
+    afterstates = set(afterstate_map.values())
+    V = {a: 0.0 for a in afterstates}
+
+    for _ in range(max_iterations):
+        delta = 0
+        new_V = {}
+
+        for afs in afterstates:
+            val = 0.0
+
+            for prob, reward, next_state in env_dynamics.get(afs, []):
+
+                if actions.get(next_state):
+                    future = max(
+                        V[afterstate_map[(next_state, act)]]
+                        for act in actions[next_state]
+                    )
+                else:
+                    future = 0.0
+
+                val += prob * (reward + gamma * future)
+
+            new_V[afs] = val
+            delta = max(delta, abs(val - V[afs]))
+
+        V = new_V
+
+        if delta < theta * 0.01:
+            break
+
+    policy = {}
+
+    for state in states:
+        if not actions.get(state):
+            continue
+
+        best_action = min(
+            actions[state],
+            key=lambda a: (-V[afterstate_map[(state, a)]], a)
+        )
+
+        policy[state] = best_action
+
+    V = {k: round(v, 4) for k, v in V.items()}
+
+    return V, policy
+    pass
