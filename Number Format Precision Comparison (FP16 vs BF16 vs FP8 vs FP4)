@@ -1,0 +1,102 @@
+import numpy as np
+import math
+
+def compare_formats(values):
+    """
+    Simulate quantizing FP32 values to FP16, BF16, FP8_E4M3, and FP4_E2M1 formats.
+    
+    Args:
+        values: list or numpy array of float values
+    
+    Returns:
+        dict mapping format name to dict with keys:
+            'max_representable', 'min_positive_normal', 'quantized',
+            'max_abs_error', 'mean_abs_error'
+    """
+
+    vals = np.array(values, dtype=np.float64)
+    
+    formats_config = {
+        'fp16': (5, 10, True),
+        'bf16': (8, 7, True),
+        'fp8_e4m3': (4, 3, False),
+        'fp4_e2m1': (2, 1, False)
+    }
+    
+    results = {}
+
+    for name, (exp_bits, man_bits, has_inf) in formats_config.items():
+        bias = (2**(exp_bits - 1)) - 1
+        
+        if has_inf:
+            max_exp_all_ones = (2**exp_bits - 1)
+            max_exp = (max_exp_all_ones - 1) - bias
+            max_val = (2 - 2**-man_bits) * (2**max_exp)
+        else:
+
+            max_exp = (2**exp_bits - 1) - bias
+
+            max_val = (1 + (2**man_bits - 2)/2**man_bits) * (2**max_exp)
+            
+        min_exp = 1 - bias
+        min_normal = 2.0**min_exp
+        
+        quantized_list = []
+        abs_errors = []
+        
+        for val in vals:
+            if np.isnan(val):
+                quantized_list.append(float('nan'))
+                continue
+            
+            orig_val = float(val)
+            sign = 1.0 if orig_val >= 0 else -1.0
+            abs_val = abs(orig_val)
+            
+            if abs_val == 0:
+                quantized_list.append(0.0 * sign)
+                abs_errors.append(0.0)
+                continue
+
+            if abs_val > max_val:
+                if has_inf:
+                    q_val = float('inf')
+                    abs_errors.append(float('inf'))
+                else:
+                    q_val = max_val
+                    abs_errors.append(abs_val - max_val)
+                quantized_list.append(float(q_val * sign))
+                continue
+
+            exp = math.floor(math.log2(abs_val))
+            if exp < min_exp:
+                resolution = 2.0**(min_exp - man_bits)
+            else:
+                exp = min(exp, max_exp)
+                resolution = 2.0**(exp - man_bits)
+
+            q_val = round(abs_val / resolution) * resolution
+
+            if q_val > max_val:
+                if has_inf:
+                    q_val = float('inf')
+                else:
+                    q_val = max_val
+            
+            quantized_list.append(float(q_val * sign))
+            
+            if math.isinf(q_val):
+                abs_errors.append(float('inf'))
+            else:
+                abs_errors.append(abs(orig_val - (q_val * sign)))
+
+        results[name] = {
+            'max_representable': float(max_val),
+            'min_positive_normal': float(min_normal),
+            'quantized': quantized_list,
+            'max_abs_error': round(float(max(abs_errors)), 6),
+            'mean_abs_error': round(float(sum(abs_errors)/len(abs_errors)), 6)
+        }
+
+    return results
+    pass
