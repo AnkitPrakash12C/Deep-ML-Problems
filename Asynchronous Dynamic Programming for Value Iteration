@@ -1,0 +1,37 @@
+import numpy as np
+
+def async_value_iteration(num_states: int, transitions: list, gamma: float, update_order: list) -> list:
+    """
+    Perform asynchronous value iteration on an MDP.
+    
+    Args:
+        num_states: Number of states in the MDP
+        transitions: transitions[s][a] = [(prob, next_state, reward), ...]
+        gamma: Discount factor
+        update_order: Sequence of state indices to update (in order)
+    
+    Returns:
+        List of float values representing the value function
+    """
+    # Your code here
+
+    V = [0.0] * num_states
+
+    for s in update_order:
+
+        if not transitions[s]:
+            continue
+
+        action_values = []
+
+        for action in transitions[s]:
+            q = 0.0
+            for prob, next_state, reward in action:
+                q += prob * (reward + gamma * V[next_state])
+
+            action_values.append(q)
+
+        V[s] = max(action_values)
+
+    return V
+    pass
