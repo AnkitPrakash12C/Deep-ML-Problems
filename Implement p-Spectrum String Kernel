@@ -1,0 +1,17 @@
+from collections import Counter
+
+def string_kernel(s: str, t: str, p: int) -> int:
+    """
+    Compute the p-spectrum string kernel between two strings.
+    """
+    if p <= 0 or len(s) < p or len(t) < p:
+        return 0
+
+    s_counts = Counter(s[i:i+p] for i in range(len(s) - p + 1))
+    t_counts = Counter(t[i:i+p] for i in range(len(t) - p + 1))
+
+    kernel = 0
+    for substring, count_s in s_counts.items():
+        kernel += count_s * t_counts.get(substring, 0)
+
+    return kernel
