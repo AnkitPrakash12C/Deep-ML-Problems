@@ -1,0 +1,53 @@
+import torch
+import triton
+import triton.language as tl
+
+@triton.jit
+def softmax_kernel(output_ptr, input_ptr, M, N, stride_xm, stride_ym,
+                   BLOCK_SIZE_N: tl.constexpr):
+    # TODO
+    row = tl.program_id(0)
+
+    if row >= M:
+        return
+
+    cols = tl.arange(0, BLOCK_SIZE_N)
+    mask = cols < N
+
+    input_ptrs = input_ptr + row * stride_xm + cols
+    x = tl.load(input_ptrs, mask=mask, other=-float("inf"))
+
+    row_max = tl.max(x, axis=0)
+    x = x - row_max
+    exp_x = tl.exp(x)
+    row_sum = tl.sum(exp_x, axis=0)
+    y = exp_x / row_sum
+
+    output_ptrs = output_ptr + row * stride_ym + cols
+    tl.store(output_ptrs, y, mask=mask)
+    pass
+
+def softmax(x: torch.Tensor) -> torch.Tensor:
+    # TODO
+    assert x.is_cuda
+    assert x.ndim == 2
+
+    M, N = x.shape
+    y = torch.empty_like(x)
+
+    BLOCK_SIZE_N = triton.next_power_of_2(N)
+
+    grid = (M,)
+
+    softmax_kernel[grid](
+        y,
+        x,
+        M,
+        N,
+        x.stride(0),
+        y.stride(0),
+        BLOCK_SIZE_N=BLOCK_SIZE_N,
+    )
+
+    return y
+    pass
