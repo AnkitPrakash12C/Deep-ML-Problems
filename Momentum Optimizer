@@ -1,0 +1,26 @@
+import numpy as np
+
+def momentum_optimizer(parameter, grad, velocity, learning_rate=0.01, momentum=0.9):
+    """
+    Update parameters using the momentum optimizer.
+    Uses momentum to accelerate learning in relevant directions and dampen oscillations.
+    
+    Args:
+        parameter: Current parameter value (scalar or np.ndarray)
+        grad: Current gradient (scalar or np.ndarray)
+        velocity: Current velocity/momentum term (scalar or np.ndarray)
+        learning_rate: Learning rate (default=0.01)
+        momentum: Momentum factor (beta) (default=0.9)
+    """
+    parameter = np.asarray(parameter)
+    grad = np.asarray(grad)
+    velocity = np.asarray(velocity)
+    
+    new_velocity = momentum * velocity + learning_rate * grad
+    
+    new_parameter = parameter - new_velocity
+    
+    if new_parameter.ndim == 0:
+        return float(new_parameter), float(new_velocity)
+        
+    return new_parameter, new_velocity
